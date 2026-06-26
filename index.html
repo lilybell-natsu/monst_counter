@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>モンストEXカウンター</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5b4ef0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="EXカウンター">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface2: #f0f0f5;
+  --border: #e0e0e8;
+  --text: #1a1a2e;
+  --text2: #6b6b80;
+  --accent: #5b4ef0;
+  --gold: #c88a0a;
+  --gold-bg: #fff8e6;
+  --gold-bd: #e8c46a;
+  --green: #1a8a50;
+  --green-bg: #eaf7f0;
+  --green-bd: #7ecfa8;
+  --red: #d63030;
+  --red-bg: #fdf0f0;
+  --red-bd: #f0a0a0;
+  --blue: #1a6abf;
+  --blue-bg: #edf4ff;
+  --blue-bd: #9ac2f0;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+/* Header */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: var(--shadow);
+}
+.header-title { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+.quest-row { display: flex; align-items: center; gap: 6px; }
+.quest-label {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer;
+}
+.btn-icon {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--accent);
+  width: 30px; height: 30px; border-radius: var(--radius-sm); cursor: pointer;
+  font-size: 19px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-weight: 700; line-height: 1;
+}
+.btn-icon:active { opacity: .6; }
+
+.content { padding: 16px; }
+
+/* 統計グリッド */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 13px 14px 11px; box-shadow: var(--shadow);
+}
+.stat-label { font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: .04em; margin-bottom: 4px; }
+.stat-value { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+.stat-value.gold  { color: var(--gold); }
+.stat-value.blue  { color: var(--blue); }
+.stat-value.green { color: var(--green); }
+.stat-value.red   { color: var(--red); }
+.stat-value.gray  { color: var(--text2); }
+.stat-rate { font-size: 11px; color: var(--text2); margin-top: 4px; font-weight: 500; }
+.stat-sub  { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+/* セクションブロック */
+.section-block {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow);
+}
+.section-head { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 11px; }
+.btn-row { display: flex; gap: 8px; }
+.btn-main {
+  flex: 1; padding: 14px 8px; border-radius: var(--radius-sm); border: none;
+  font-size: 14px; font-weight: 700; cursor: pointer; transition: transform .1s; letter-spacing: .02em;
+}
+.btn-main:active { transform: scale(.96); }
+.btn-gold    { background: var(--gold-bg);  color: var(--gold);  border: 1.5px solid var(--gold-bd); }
+.btn-blue    { background: var(--blue-bg);  color: var(--blue);  border: 1.5px solid var(--blue-bd); font-size: 15px; }
+.btn-green   { background: var(--green-bg); color: var(--green); border: 1.5px solid var(--green-bd); }
+.btn-red     { background: var(--red-bg);   color: var(--red);   border: 1.5px solid var(--red-bd); }
+.btn-outline { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-size: 12px; padding: 14px 10px; flex: 0 0 auto; min-width: 56px; }
+
+/* ラック */
+.rack-top { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
+.rack-big  { font-size: 44px; font-weight: 800; color: var(--gold); line-height: 1; letter-spacing: -.02em; }
+.rack-unit { font-size: 16px; color: var(--text2); font-weight: 600; }
+.rack-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; margin-bottom: 10px; }
+.rack-btn {
+  padding: 11px 4px; background: var(--gold-bg); border: 1.5px solid var(--gold-bd);
+  border-radius: var(--radius-sm); color: var(--gold); font-size: 13px; font-weight: 700; cursor: pointer; transition: all .1s;
+}
+.rack-btn:active { background: var(--gold); color: #fff; transform: scale(.95); }
+.rack-manual { display: flex; gap: 8px; }
+.rack-input {
+  flex: 1; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); font-size: 15px; padding: 9px 12px; border-radius: var(--radius-sm);
+  outline: none; text-align: center;
+}
+.rack-input:focus { border-color: var(--gold-bd); }
+.btn-set {
+  background: var(--gold-bg); border: 1.5px solid var(--gold-bd); color: var(--gold);
+  font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap;
+}
+.btn-set:active { background: var(--gold); color: #fff; }
+
+/* リセット */
+.reset-row { margin-top: 14px; display: flex; justify-content: center; }
+.btn-reset { background: none; border: 1px solid var(--border); color: var(--text2); font-size: 12px; padding: 8px 22px; border-radius: var(--radius-sm); cursor: pointer; }
+.btn-reset:active { border-color: var(--red); color: var(--red); }
+
+/* ボトムシート共通 */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(30,30,60,.45); z-index: 100;
+  align-items: flex-start; justify-content: center;
+}
+.overlay.show { display: flex; }
+.sheet {
+  background: var(--surface); border-radius: 0 0 20px 20px;
+  padding: 16px 20px 36px; width: 100%; max-width: 480px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.12);
+}
+.sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+.sheet-title  { font-size: 15px; font-weight: 800; margin-bottom: 14px; }
+
+/* 遭遇シート */
+.enc-sheet { text-align: center; }
+.enc-title { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+.enc-sub   { font-size: 12px; color: var(--text2); margin-bottom: 20px; }
+.enc-btns  { display: flex; gap: 10px; }
+.enc-btns .btn-main { padding: 16px; font-size: 15px; }
+
+/* ラック加算シート */
+.rack-sheet-note { font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+.rack-sheet-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; margin-bottom: 10px; }
+.rack-sheet-manual { display: flex; gap: 8px; margin-bottom: 16px; }
+.btn-skip { width: 100%; padding: 12px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; }
+.btn-skip:active { opacity: .7; }
+
+/* クエストメニューシート */
+.quest-menu-overlay { display: none; position: fixed; inset: 0; background: rgba(30,30,60,.35); z-index: 100; align-items: flex-start; justify-content: center; }
+.quest-menu-overlay.show { display: flex; }
+.quest-menu { background: var(--surface); border-radius: 0 0 20px 20px; padding: 16px 16px 36px; width: 100%; max-width: 480px; box-shadow: 0 4px 24px rgba(0,0,0,.12); max-height: 70vh; overflow-y: auto; }
+.quest-menu-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.quest-menu-title { font-size: 14px; font-weight: 800; }
+.btn-close { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.quest-item { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: var(--radius-sm); cursor: pointer; border: 1.5px solid var(--border); margin-bottom: 8px; background: var(--surface); }
+.quest-item.current { border-color: var(--accent); }
+.quest-info { flex: 1; min-width: 0; }
+.quest-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quest-memo { font-size: 11px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quest-badge { font-size: 10px; background: var(--accent); color: #fff; padding: 3px 8px; border-radius: 10px; flex-shrink: 0; font-weight: 700; }
+.btn-del { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; line-height: 1; }
+.btn-del:active { color: var(--red); }
+.btn-new-quest { width: 100%; padding: 12px; background: var(--surface2); border: 1.5px dashed var(--border); color: var(--accent); font-size: 13px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; margin-top: 4px; }
+.btn-new-quest:active { opacity: .7; }
+.empty { text-align: center; color: var(--text2); font-size: 13px; padding: 20px 0; }
+
+/* クエスト追加シート */
+.form-label { font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 5px; letter-spacing: .03em; }
+.form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-size: 14px; padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: 10px; outline: none; font-family: inherit; }
+.form-input:focus { border-color: var(--accent); }
+.form-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-size: 13px; padding: 10px 12px; border-radius: var(--radius-sm); resize: vertical; min-height: 64px; outline: none; font-family: inherit; margin-bottom: 14px; }
+.form-textarea:focus { border-color: var(--accent); }
+.form-btns { display: flex; gap: 8px; }
+.btn-cancel { flex: 0 0 auto; padding: 13px 18px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; }
+.btn-cancel:active { opacity: .7; }
+.btn-add { flex: 1; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-add:active { opacity: .85; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">⚔ EXカウンター</div>
+  <div class="quest-row">
+    <div class="quest-label" id="current-quest-label" onclick="openQuestMenu()">未選択</div>
+    <button class="btn-icon" onclick="openQuestMenu()">≡</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- 統計カード -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">周回数</div>
+      <div class="stat-value gold" id="val-laps">0</div>
+      <div class="stat-sub">遭遇でリセット</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">総周回数</div>
+      <div class="stat-value gray" id="val-total">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">遭遇数</div>
+      <div class="stat-value blue" id="val-enc">0</div>
+      <div class="stat-rate" id="rate-enc">遭遇率 —</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">勝利 / 敗北</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-top:2px;">
+        <span class="stat-value green" id="val-win" style="font-size:24px;">0</span>
+        <span style="color:var(--text2);font-size:16px;font-weight:700;">/</span>
+        <span class="stat-value red" id="val-lose" style="font-size:24px;">0</span>
+      </div>
+      <div class="stat-rate" id="rate-win">勝率 —</div>
+    </div>
+  </div>
+
+  <!-- 周回 -->
+  <div class="section-block">
+    <div class="section-head">周回</div>
+    <div class="btn-row">
+      <button class="btn-main btn-gold" onclick="addLap()">＋1 周回</button>
+      <button class="btn-main btn-outline" onclick="undoLap()">↩ 取消</button>
+    </div>
+  </div>
+
+  <!-- 遭遇 -->
+  <div class="section-block">
+    <div class="section-head">遭遇</div>
+    <div class="btn-row">
+      <button class="btn-main btn-blue" onclick="openEnc()">⚡ 遭遇！</button>
+    </div>
+  </div>
+
+  <!-- ラック -->
+  <div class="section-block">
+    <div class="section-head">ラック（運極進捗）</div>
+    <div class="rack-top">
+      <div class="rack-big" id="rack-num">0</div>
+      <div class="rack-unit">体</div>
+    </div>
+    <div class="rack-btns">
+      <button class="rack-btn" onclick="addRack(1)">+1</button>
+      <button class="rack-btn" onclick="addRack(2)">+2</button>
+      <button class="rack-btn" onclick="addRack(3)">+3</button>
+      <button class="rack-btn" onclick="addRack(4)">+4</button>
+      <button class="rack-btn" onclick="addRack(5)">+5</button>
+    </div>
+    <div class="rack-manual">
+      <input class="rack-input" type="number" id="rack-manual-val" placeholder="直接入力" min="0">
+      <button class="btn-set" onclick="setRackManual()">セット</button>
+    </div>
+  </div>
+
+  <div class="reset-row">
+    <button class="btn-reset" onclick="openResetConfirm()">このクエストをリセット</button>
+  </div>
+</div>
+
+<!-- 遭遇シート -->
+<div class="overlay" id="enc-overlay">
+  <div class="sheet enc-sheet">
+    <div class="sheet-handle"></div>
+    <div class="enc-title">⚡ 遭遇！</div>
+    <div class="enc-sub">結果を選択してください</div>
+    <div class="enc-btns">
+      <button class="btn-main btn-green" onclick="recordResult('win')">勝利 🎉</button>
+      <button class="btn-main btn-red"   onclick="recordResult('lose')">敗北 💀</button>
+    </div>
+  </div>
+</div>
+
+<!-- ラック加算シート（勝利後） -->
+<div class="overlay" id="rack-overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🪙 ラックを加算</div>
+    <div class="rack-sheet-note">今回のドロップ数を選択してください</div>
+    <div class="rack-sheet-btns">
+      <button class="rack-btn" onclick="addRackFromSheet(1)">+1</button>
+      <button class="rack-btn" onclick="addRackFromSheet(2)">+2</button>
+      <button class="rack-btn" onclick="addRackFromSheet(3)">+3</button>
+      <button class="rack-btn" onclick="addRackFromSheet(4)">+4</button>
+      <button class="rack-btn" onclick="addRackFromSheet(5)">+5</button>
+    </div>
+    <div class="rack-sheet-manual">
+      <input class="rack-input" type="number" id="rack-sheet-val" placeholder="それ以上は直接入力" min="0">
+      <button class="btn-set" onclick="addRackFromSheetManual()">追加</button>
+    </div>
+    <button class="btn-skip" onclick="closeRackSheet()">スキップ（0体）</button>
+  </div>
+</div>
+
+<!-- 削除確認シート -->
+<div class="overlay" id="delete-overlay" style="align-items:flex-end;">
+  <div class="sheet" style="text-align:center;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12);">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" style="margin-bottom:6px;">🗑 削除の確認</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px;" id="delete-confirm-msg"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-cancel" style="flex:1;" onclick="closeDeleteConfirm()">キャンセル</button>
+      <button class="btn-main btn-red" style="flex:1;padding:13px;" onclick="doDelete()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- リセット確認シート -->
+<div class="overlay" id="reset-overlay" style="align-items:flex-end;">
+  <div class="sheet" style="text-align:center;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12);">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" style="margin-bottom:6px;">⚠️ リセットの確認</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px;" id="reset-confirm-msg">この操作は取り消せません。</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-cancel" style="flex:1;" onclick="closeResetConfirm()">キャンセル</button>
+      <button class="btn-main btn-red" style="flex:1;padding:13px;" onclick="doReset()">リセットする</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="quest-menu-overlay" id="quest-menu-overlay">
+  <div class="quest-menu">
+    <div class="quest-menu-head">
+      <div class="quest-menu-title">クエスト</div>
+      <button class="btn-close" onclick="closeQuestMenu()">×</button>
+    </div>
+    <div id="quest-list"></div>
+    <button class="btn-new-quest" onclick="openAddQuest()">＋ 新しいクエストを追加</button>
+  </div>
+</div>
+
+<!-- クエスト追加シート -->
+<div class="overlay" id="add-quest-overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">クエストを追加</div>
+    <div class="form-label">クエスト名</div>
+    <input class="form-input" type="text" id="new-quest-name" placeholder="例：覇者の塔30F">
+    <div class="form-label">メモ</div>
+    <textarea class="form-textarea" id="new-quest-memo" placeholder="編成・狙いなど"></textarea>
+    <div class="form-btns">
+      <button class="btn-cancel" onclick="closeAddQuest()">キャンセル</button>
+      <button class="btn-add"    onclick="addQuest()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let data = {};
+let currentQuestId = null;
+
+function load() {
+  const raw = localStorage.getItem('monst_ex_v4');
+  data = raw ? JSON.parse(raw) : { quests: {} };
+  if (!data.quests) data.quests = {};
+}
+function save() { localStorage.setItem('monst_ex_v4', JSON.stringify(data)); }
+function currentData() { return currentQuestId ? data.quests[currentQuestId] : null; }
+
+function updateStats() {
+  const q = currentData();
+  document.getElementById('current-quest-label').textContent = q ? q.name : '未選択';
+  if (!q) {
+    document.getElementById('val-laps').textContent  = '—';
+    document.getElementById('val-total').textContent = '—';
+    document.getElementById('val-enc').textContent   = '—';
+    document.getElementById('val-win').textContent   = '—';
+    document.getElementById('val-lose').textContent  = '—';
+    document.getElementById('rate-enc').textContent  = '遭遇率 —';
+    document.getElementById('rate-win').textContent  = '勝率 —';
+    document.getElementById('rack-num').textContent  = '—';
+    return;
+  }
+  document.getElementById('val-laps').textContent  = q.laps;
+  document.getElementById('val-total').textContent = q.total;
+  document.getElementById('val-enc').textContent   = q.enc;
+  document.getElementById('val-win').textContent   = q.win;
+  document.getElementById('val-lose').textContent  = q.lose;
+  const encRate = q.total > 0 ? ((q.enc / q.total) * 100).toFixed(1) : null;
+  const winRate = q.enc   > 0 ? ((q.win / q.enc)   * 100).toFixed(1) : null;
+  document.getElementById('rate-enc').textContent = encRate ? `遭遇率 ${encRate}%` : '遭遇率 —';
+  document.getElementById('rate-win').textContent = winRate ? `勝率 ${winRate}%`   : '勝率 —';
+  document.getElementById('rack-num').textContent = q.rack;
+}
+
+function renderQuestList() {
+  const list = document.getElementById('quest-list');
+  const keys = Object.keys(data.quests);
+  if (!keys.length) { list.innerHTML = '<div class="empty">クエストがありません</div>'; return; }
+  list.innerHTML = keys.map(id => {
+    const q = data.quests[id], cur = id === currentQuestId;
+    return `<div class="quest-item${cur?' current':''}" onclick="switchQuest('${id}')">
+      <div class="quest-info">
+        <div class="quest-name">${esc(q.name)}</div>
+        ${q.memo ? `<div class="quest-memo">${esc(q.memo)}</div>` : ''}
+      </div>
+      ${cur ? '<span class="quest-badge">選択中</span>' : ''}
+      <button class="btn-del" onclick="deleteQuest(event,'${id}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function openQuestMenu()  { renderQuestList(); document.getElementById('quest-menu-overlay').classList.add('show'); }
+function closeQuestMenu() { document.getElementById('quest-menu-overlay').classList.remove('show'); }
+function switchQuest(id)  { currentQuestId = id || null; save(); updateStats(); closeQuestMenu(); }
+
+function openAddQuest() {
+  closeQuestMenu();
+  document.getElementById('add-quest-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('new-quest-name').focus(), 100);
+}
+function closeAddQuest() {
+  document.getElementById('add-quest-overlay').classList.remove('show');
+  document.getElementById('new-quest-name').value = '';
+  document.getElementById('new-quest-memo').value = '';
+}
+function addQuest() {
+  const name = document.getElementById('new-quest-name').value.trim();
+  if (!name) { alert('クエスト名を入力してください'); return; }
+  const id = 'q_' + Date.now();
+  data.quests[id] = { name, memo: document.getElementById('new-quest-memo').value.trim(), laps:0, total:0, enc:0, win:0, lose:0, rack:0 };
+  currentQuestId = id;
+  save(); updateStats(); closeAddQuest();
+}
+let pendingDeleteId = null;
+function deleteQuest(e, id) {
+  e.stopPropagation();
+  pendingDeleteId = id;
+  const name = data.quests[id] ? data.quests[id].name : '';
+  document.getElementById('delete-confirm-msg').textContent = `「${name}」を削除します。この操作は取り消せません。`;
+  document.getElementById('delete-overlay').classList.add('show');
+}
+function closeDeleteConfirm() {
+  document.getElementById('delete-overlay').classList.remove('show');
+  pendingDeleteId = null;
+}
+function doDelete() {
+  if (!pendingDeleteId) return;
+  delete data.quests[pendingDeleteId];
+  if (currentQuestId === pendingDeleteId) currentQuestId = null;
+  save(); updateStats(); renderQuestList();
+  closeDeleteConfirm();
+}
+
+function addLap() {
+  const q = currentData();
+  if (!q) { alert('クエストを選択してください'); return; }
+  q.laps++; q.total++;
+  save(); updateStats(); pulse('val-laps');
+}
+function undoLap() {
+  const q = currentData();
+  if (!q || q.laps <= 0) return;
+  q.laps--; q.total--;
+  save(); updateStats();
+}
+
+function openEnc() {
+  if (!currentData()) { alert('クエストを選択してください'); return; }
+  document.getElementById('enc-overlay').classList.add('show');
+}
+function recordResult(r) {
+  const q = currentData(); if (!q) return;
+  q.enc++;
+  if (r === 'win') {
+    q.win++;
+    q.laps = 0; // 遭遇でリセット
+    document.getElementById('enc-overlay').classList.remove('show');
+    save(); updateStats(); pulse('val-enc');
+    // ラック加算シートへ
+    document.getElementById('rack-sheet-val').value = '';
+    document.getElementById('rack-overlay').classList.add('show');
+  } else {
+    q.lose++;
+    q.laps = 0; // 遭遇でリセット
+    document.getElementById('enc-overlay').classList.remove('show');
+    save(); updateStats(); pulse('val-enc');
+    // 敗北はラック加算なし
+  }
+}
+
+function addRackFromSheet(n) {
+  const q = currentData(); if (!q) return;
+  q.rack += n;
+  save(); updateStats();
+  closeRackSheet();
+}
+function addRackFromSheetManual() {
+  const v = parseInt(document.getElementById('rack-sheet-val').value);
+  if (isNaN(v) || v < 0) { alert('0以上の数値を入力してください'); return; }
+  const q = currentData(); if (!q) return;
+  q.rack += v;
+  save(); updateStats();
+  closeRackSheet();
+}
+function closeRackSheet() {
+  document.getElementById('rack-overlay').classList.remove('show');
+  document.getElementById('rack-sheet-val').value = '';
+}
+
+function addRack(n) {
+  const q = currentData();
+  if (!q) { alert('クエストを選択してください'); return; }
+  q.rack += n; save(); updateStats();
+}
+function setRackManual() {
+  const q = currentData();
+  if (!q) { alert('クエストを選択してください'); return; }
+  const v = parseInt(document.getElementById('rack-manual-val').value);
+  if (isNaN(v) || v < 0) { alert('0以上の数値を入力してください'); return; }
+  q.rack = v;
+  document.getElementById('rack-manual-val').value = '';
+  save(); updateStats();
+}
+
+function openResetConfirm() {
+  const q = currentData(); if (!q) { alert('クエストを選択してください'); return; }
+  document.getElementById('reset-confirm-msg').textContent = `「${q.name}」の全データをリセットします。この操作は取り消せません。`;
+  document.getElementById('reset-overlay').classList.add('show');
+}
+function closeResetConfirm() {
+  document.getElementById('reset-overlay').classList.remove('show');
+}
+function doReset() {
+  const q = currentData(); if (!q) return;
+  q.laps=0; q.total=0; q.enc=0; q.win=0; q.lose=0; q.rack=0;
+  save(); updateStats(); closeResetConfirm();
+}
+
+function pulse(id) {
+  const el = document.getElementById(id); if (!el) return;
+  el.style.transition = 'transform .1s';
+  el.style.transform = 'scale(1.25)';
+  setTimeout(() => { el.style.transform = 'scale(1)'; }, 150);
+}
+
+document.getElementById('delete-overlay').addEventListener('click', function(e) { if (e.target===this) closeDeleteConfirm(); });
+document.getElementById('reset-overlay').addEventListener('click',        function(e) { if (e.target===this) closeResetConfirm(); });
+document.getElementById('quest-menu-overlay').addEventListener('click', function(e) { if (e.target===this) closeQuestMenu(); });
+document.getElementById('enc-overlay').addEventListener('click',       function(e) { if (e.target===this) this.classList.remove('show'); });
+document.getElementById('add-quest-overlay').addEventListener('click', function(e) { if (e.target===this) closeAddQuest(); });
+// ラックシートは背景タップで閉じない（スキップボタンを使わせる）
+
+load();
+currentQuestId = Object.keys(data.quests)[0] || null;
+updateStats();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js');
+  });
+}
+</script>
+</body>
+</html>
